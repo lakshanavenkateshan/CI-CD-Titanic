@@ -39,10 +39,16 @@ jobs:
        key: ${{ secrets.EC2_KEY }}
        script: |
         aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
-        | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
         docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/titanic-flask-app:latest
+        if [ $(docker ps -q --filter "publish=5000") ]; then
+          docker stop $(docker ps -q --filter "publish=5000")
+          docker rm $(docker ps -aq --filter "publish=5000")
+        fi
         if [ $(docker ps -q -f name=titanic) ]; then docker stop titanic; fi
         if [ $(docker ps -aq -f name=titanic) ]; then docker rm titanic; fi
+
         docker run -d --name titanic -p 5000:5000 --restart unless-stopped ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/titanic-flask-app:latest
+
 
 
